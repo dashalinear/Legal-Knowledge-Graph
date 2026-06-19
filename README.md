@@ -1,9 +1,9 @@
-# LegalGraph-RU: Knowledge Graph for Russian Criminal Cases
+# Construction and application of a knowledge graph based on a corpus of legal texts
 
 LegalGraph-RU is a minimal, reproducible implementation of a pipeline
 for building a knowledge graph from Russian criminal court decisions.
 It was extracted from a larger research prototype used to study
-rule-based NER and legal knowledge graphs on Russian court texts.[web:1][web:4]
+rule-based NER and legal knowledge graphs on Russian court texts.
 
 The repository is intentionally small: it focuses on a clear, end-to-end
 example that can be cloned, run locally and easily extended for further
@@ -35,7 +35,7 @@ research or teaching.
 ## Project structure
 
 ```text
-legal-graph-ru/
+Legal-Knowledge-Graph/
   README.md          ← you are here
   LICENSE            ← MIT license
   requirements.txt   ← Python dependencies
@@ -68,9 +68,11 @@ experiments or as an executable appendix to a research paper.
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/<your-username>/legal-graph-ru.git
-cd legal-graph-ru
+git clone https://github.com/dashalinear/Legal-Knowledge-Graph.git
+cd Legal-Knowledge-Graph
 ```
+
+Tested with Python 3.11–3.13 on Windows; Neo4j integration was tested with Neo4j 5.x.
 
 2. **Create and activate a virtual environment (recommended)**
 
