@@ -1,29 +1,27 @@
-# build_neo4j_graph.py
-from config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
-from load_cases import load_cases
-from regex_ner_articles import extract_articles
-from regex_ner_persons import extract_persons
+# src/build_neo4j_graph.py
+from typing import List, Dict, Any
+
+from neo4j import GraphDatabase
+
+from .config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 
 
 class Neo4jCaseGraph:
-    """Wrapper around the Neo4j driver for creating a simple case graph."""
-
-    def __init__(self) -> None:
+    def __init__(self):
         self.driver = GraphDatabase.driver(
             NEO4J_URI,
             auth=(NEO4J_USER, NEO4J_PASSWORD),
         )
 
-    def close(self) -> None:
+    def close(self):
         self.driver.close()
 
     def create_case_graph(
         self,
         cases: List[Dict[str, Any]],
-        extract_articles_fn: Callable[[str], List[Dict]],
-        extract_persons_fn: Callable[[str], List[Dict]],
-    ) -> None:
-        """Populate Neo4j with Case, Article, Person nodes and relationships."""
+        extract_articles_fn,
+        extract_persons_fn,
+    ):
         with self.driver.session() as session:
             for case in cases:
                 session.execute_write(
@@ -34,10 +32,11 @@ class Neo4jCaseGraph:
                 )
 
     @staticmethod
-    def _create_case_tx(tx, case, extract_articles_fn, extract_persons_fn) -> None:
+    def _create_case_tx(tx, case, extract_articles_fn, extract_persons_fn):
         case_id = case.get("case_id")
         text = case.get("text", "")
 
+        # Узел дела
         tx.run(
             """
             MERGE (c:Case {id: $case_id})
@@ -49,6 +48,7 @@ class Neo4jCaseGraph:
             court=case.get("court"),
         )
 
+        # Статьи УК
         articles = extract_articles_fn(text)
         for art in articles:
             for num in art.get("article_numbers", []):
@@ -62,28 +62,21 @@ class Neo4jCaseGraph:
                     case_id=case_id,
                 )
 
+        # Персоны
         persons = extract_persons_fn(text)
         for person in persons:
+            raw_name = person["text"]
+            norm_name = person.get("normalized") or raw_name
+
             tx.run(
                 """
-                MERGE (p:Person {name: $name})
+                MERGE (p:Person {normalized_name: $norm_name})
+                ON CREATE SET p.name = $raw_name
+                ON MATCH SET p.name = p.name
                 MERGE (c:Case {id: $case_id})
                 MERGE (c)-[:ACCUSED_IN]->(p)
                 """,
-                name=person["text"],
+                norm_name=norm_name,
+                raw_name=raw_name,
                 case_id=case_id,
             )
-
-
-if __name__ == "__main__":
-    # Minimal CLI entrypoint: build graph for sample cases.
-    from .load_cases import load_cases
-    from .regex_ner_articles import extract_articles
-    from .regex_ner_persons import extract_persons
-
-    cases = load_cases()
-    graph = Neo4jCaseGraph()
-    try:
-        graph.create_case_graph(cases, extract_articles, extract_persons)
-    finally:
-        graph.close()
