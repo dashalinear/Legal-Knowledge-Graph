@@ -1,17 +1,26 @@
-# src/build_neo4j_graph.py
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from neo4j import GraphDatabase
 
-from .config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
+from .config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from .load_cases import load_cases
+from .regex_ner_articles import extract_articles
+from .regex_ner_persons import extract_persons
 
 
 class Neo4jCaseGraph:
     def __init__(self):
+        if not NEO4J_URI or not NEO4J_PASSWORD:
+            raise RuntimeError(
+                "Neo4j is not configured. "
+                "Set NEO4J_URI, NEO4J_USER, and NEO4J_PASSWORD in .env."
+            )
+
         self.driver = GraphDatabase.driver(
             NEO4J_URI,
             auth=(NEO4J_USER, NEO4J_PASSWORD),
         )
+        self.driver.verify_connectivity()
 
     def close(self):
         self.driver.close()
@@ -36,7 +45,6 @@ class Neo4jCaseGraph:
         case_id = case.get("case_id")
         text = case.get("text", "")
 
-        # Узел дела
         tx.run(
             """
             MERGE (c:Case {id: $case_id})
@@ -48,35 +56,54 @@ class Neo4jCaseGraph:
             court=case.get("court"),
         )
 
-        # Статьи УК
         articles = extract_articles_fn(text)
-        for art in articles:
-            for num in art.get("article_numbers", []):
+        for article in articles:
+            for number in article.get("article_numbers", []):
                 tx.run(
                     """
-                    MERGE (a:Article {number: $num})
+                    MERGE (a:Article {number: $number})
                     MERGE (c:Case {id: $case_id})
                     MERGE (c)-[:INVOLVES_ARTICLE]->(a)
                     """,
-                    num=num,
+                    number=number,
                     case_id=case_id,
                 )
 
-        # Персоны
         persons = extract_persons_fn(text)
         for person in persons:
             raw_name = person["text"]
-            norm_name = person.get("normalized") or raw_name
+            normalized_name = person.get("normalized") or raw_name
 
             tx.run(
                 """
-                MERGE (p:Person {normalized_name: $norm_name})
+                MERGE (p:Person {normalized_name: $normalized_name})
                 ON CREATE SET p.name = $raw_name
-                ON MATCH SET p.name = p.name
                 MERGE (c:Case {id: $case_id})
                 MERGE (c)-[:ACCUSED_IN]->(p)
                 """,
-                norm_name=norm_name,
+                normalized_name=normalized_name,
                 raw_name=raw_name,
                 case_id=case_id,
             )
+
+
+def main():
+    cases = load_cases()
+
+    if not cases:
+        raise RuntimeError("No case files found in data/sample_cases.")
+
+    graph_db = Neo4jCaseGraph()
+    try:
+        graph_db.create_case_graph(
+            cases,
+            extract_articles,
+            extract_persons,
+        )
+        print(f"Neo4j graph created successfully: {len(cases)} cases loaded.")
+    finally:
+        graph_db.close()
+
+
+if __name__ == "__main__":
+    main()
