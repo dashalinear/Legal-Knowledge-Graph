@@ -68,9 +68,9 @@ def main() -> None:
     html_path = Path("output") / "local_graph.html"
     html_path.parent.mkdir(parents=True, exist_ok=True)
 
-    network.write_html(str(html_path), open_browser=False, notebook=False)
+    html = network.generate_html(notebook=False)
+    html_path.write_text(html, encoding="utf-8")
 
-    html = html_path.read_text(encoding="utf-8")
     components.html(html, height=540, scrolling=False)
 
     st.info(
