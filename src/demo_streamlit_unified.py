@@ -728,7 +728,7 @@ def render_text_analysis() -> None:
 
         st.write(
             f"**Статьи УК:** "
-            f"{', '.join(item['text'] for item in articles) if articles else 'не извлечены'}"
+            f"{', '.join((item['text'] if isinstance(item, dict) else str(item)) for item in articles) if articles else 'не извлечены'}"
         )
 
         st.subheader("Персоны по ролям")
