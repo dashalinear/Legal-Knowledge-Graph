@@ -27,7 +27,7 @@ RE_UK_ARTICLE = re.compile(
 
 def extract_articles_v2(text: str):
     matches = RE_UK_ARTICLE.findall(text or "")
-    return list(dict.fromkeys(" ".join(item.split()) for item in matches))
+    return [{"text": article} for article in dict.fromkeys(" ".join(item.split()) for item in matches)]
 
 
 # ═════════════════════════════════════════════════════════════════════
