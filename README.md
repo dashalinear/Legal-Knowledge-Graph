@@ -1,18 +1,20 @@
 # LegalGraph-RU: Russian Criminal Court Knowledge Graph
 
-LegalGraph-RU is a research prototype for transforming Russian criminal court decisions into a structured knowledge graph. It combines deterministic extraction of Criminal Code article numbers, person extraction, a Neo4j graph, and an interactive Streamlit interface.
+**Live demo:** https://legal-knowledge-graph.streamlit.app/
 
-The public repository is intentionally reproducible and does not include the full research corpus or any credentials. It contains synthetic sample cases, code, figures, and the LaTeX source of the accompanying paper.
+LegalGraph-RU is a research prototype for transforming Russian criminal court decisions into a structured knowledge graph. It combines deterministic extraction of Criminal Code article references, role-aware person extraction, Neo4j graph modelling, and an interactive Streamlit interface.
+
+The public repository is intentionally reproducible and does not include the full research corpus, credentials, or computer-specific paths. It contains synthetic sample cases, source code, generated figures, and the LaTeX source of the accompanying paper.
 
 ## Features
 
-- Extract Criminal Code article references from Russian legal text.
+- Extract references to articles of the Criminal Code of the Russian Federation from legal text.
 - Extract person mentions and procedural roles in the local role-aware NER mode.
 - Build local case graphs with articles, persons, courts, and typed relationships.
 - Search an optional Neo4j AuraDB graph by case number or Criminal Code article.
-- Inspect a case card, a local AuraDB subgraph, and graph-level metrics.
-- Analyse a supplied text locally and export extracted entities and roles as JSON.
-- Reproduce the public sample-data workflow without access to the full corpus.
+- Inspect a case card, an AuraDB subgraph, and graph-level metrics.
+- Analyse supplied text locally and export extracted entities and roles as JSON.
+- Reproduce the public sample-data workflow without access to the full research corpus.
 
 ## Repository layout
 
@@ -20,13 +22,14 @@ The public repository is intentionally reproducible and does not include the ful
 Legal-Knowledge-Graph/
 ├── data/
 │   └── sample_cases/                 # Synthetic public examples
+├── lib/                              # Auxiliary local assets
+├── output/                           # Generated demo figures
 ├── paper/
-│   ├── main.tex                       # Paper source
-│   ├── references.bib
-│   └── figures/
+│   ├── main.tex                      # Paper source
+│   └── references.bib
 ├── src/
-│   ├── demo_streamlit_unified.py      # Main application
-│   ├── demo_ner_graph_roles.py        # Local role-aware NER and graph module
+│   ├── demo_streamlit_unified.py     # Main Streamlit application
+│   ├── demo_ner_graph_roles.py       # Local role-aware NER and graph module
 │   ├── import_aura_subset.py          # Optional AuraDB import helper
 │   ├── demo_streamlit.py              # Legacy sample-data demo
 │   ├── build_local_graph.py
@@ -36,9 +39,16 @@ Legal-Knowledge-Graph/
 │   └── evaluation.py
 ├── .env.example
 ├── .gitignore
-├── requirements.txt
-└── README.md
+├── LICENSE
+├── README.md
+└── requirements.txt
 ```
+
+## Requirements
+
+- Python 3.11 is recommended.
+- Git.
+- Neo4j AuraDB is optional: it is required only for real-case search, AuraDB subgraphs, and graph metrics.
 
 ## Installation
 
@@ -74,7 +84,39 @@ pip install -r requirements.txt
 
 ## Run the unified demo
 
-Create a local configuration file from the safe template:
+Start the main application:
+
+```bash
+streamlit run src/demo_streamlit_unified.py
+```
+
+Streamlit prints a local address, normally `http://localhost:8501`. This address is available only on the computer where Streamlit is running.
+
+The public deployment is available at:
+
+```text
+https://legal-knowledge-graph.streamlit.app/
+```
+
+## Local role-aware NER mode
+
+The **Text analysis** page works without AuraDB credentials and without a `.env` file. The role-aware NER module is bundled in `src/demo_ner_graph_roles.py` and is discovered automatically.
+
+Choose a bundled example or paste Russian legal text to obtain:
+
+- Criminal Code article references.
+- Court name.
+- Person mentions grouped by procedural role.
+- A local case graph.
+- A JSON export containing extracted entities and role spans.
+
+Generated files are written to `output/unified_ner/` and are intentionally ignored by Git.
+
+## Optional AuraDB mode
+
+AuraDB enables real-case search, article search, AuraDB subgraphs, and graph metrics.
+
+For local use, copy the safe configuration template:
 
 Windows PowerShell:
 
@@ -88,35 +130,7 @@ Linux or macOS:
 cp .env.example .env
 ```
 
-For the local role-aware NER mode, retain this value in `.env`:
-
-```env
-ROLE_DEMO_DIR=src
-```
-
-Start the application:
-
-```bash
-streamlit run src/demo_streamlit_unified.py
-```
-
-Streamlit prints a local address, normally `http://localhost:8501`. This address is available only on the computer where Streamlit is running; it is not a public deployment URL.
-
-### Local role-aware NER mode
-
-The **Анализ своего текста** page works without AuraDB. Choose a bundled example or paste text, then run the analysis to obtain:
-
-- Criminal Code article references;
-- court name;
-- person mentions grouped by procedural role;
-- a PNG local graph;
-- a JSON download containing extracted entities and role spans.
-
-Generated files are written to `output/unified_ner/` and are intentionally ignored by Git.
-
-### Optional AuraDB mode
-
-To enable case search, article search, AuraDB subgraphs, and metrics, fill in these values in your private `.env` file:
+Fill in the private `.env` file with valid database credentials:
 
 ```env
 NEO4J_URI=neo4j+s://...
@@ -125,13 +139,15 @@ NEO4J_PASSWORD=...
 NEO4J_DATABASE=...
 ```
 
-Never commit `.env`, credentials, a private AuraDB URI, or paths specific to one computer.
+For Streamlit Community Cloud, store these values in **Manage app → Settings → Secrets**, not in the repository.
+
+Never commit `.env`, passwords, Streamlit Secrets, private AuraDB credentials, a full research corpus, or paths specific to one computer.
 
 If AuraDB is unavailable, the local text-analysis mode remains available.
 
 ## Optional AuraDB import
 
-`src/import_aura_subset.py` is a developer utility for importing a deliberately limited subset of a private corpus into AuraDB. It requires an external private source pipeline and data directory configured through `.env`:
+`src/import_aura_subset.py` is a developer utility for importing a deliberately limited subset of a private corpus into AuraDB. It requires an external private source pipeline and data directory configured locally through `.env`:
 
 ```env
 SOURCE_PIPELINE_DIR=
@@ -150,11 +166,18 @@ The repository retains a compact synthetic-data workflow for fully local reprodu
 streamlit run src/demo_streamlit.py
 ```
 
-The sample cases are stored in `data/sample_cases/`. The legacy demo is independent of AuraDB and is useful for a minimal local sanity check.
+The sample cases are stored in `data/sample_cases/`. The legacy demo is independent of AuraDB and is useful as a minimal local sanity check.
 
 ## Evaluation and paper
 
-The accompanying paper source is in `paper/main.tex`. The reported evaluation distinguishes graph-oriented article-number matching from strict mention-span matching. On the manually annotated 20-case set, article-number extraction achieved precision 1.000, recall 0.955, and F1 0.977; person extraction achieved precision 0.9259, recall 1.000, and F1 0.9615.
+The accompanying paper source is located in `paper/main.tex`. The reported evaluation distinguishes graph-oriented article-number matching from strict mention-span matching.
+
+On the manually annotated 20-case set:
+
+| Task | Precision | Recall | F1 |
+|---|---:|---:|---:|
+| Article-number extraction | 1.000 | 0.955 | 0.977 |
+| Person extraction | 0.9259 | 1.000 | 0.9615 |
 
 To compile the paper with a TeX distribution or Overleaf:
 
@@ -168,11 +191,12 @@ pdflatex main.tex
 
 ## Reproducibility scope and limitations
 
-- The public sample data is synthetic and is intended for safe reproducibility.
+- Public sample data is synthetic and intended for safe reproducibility.
 - The complete research corpus and local research paths are not included.
-- The extraction rules are tailored to Russian criminal court decisions and do not automatically generalize to other jurisdictions.
+- Extraction rules are tailored to Russian criminal court decisions and do not automatically generalize to other jurisdictions.
 - Role-aware extraction is provided for interactive analysis and qualitative inspection; the primary reported quantitative evaluation concerns article numbers and person mentions.
 - Any real-world use of legal-text graphs must consider privacy, data protection, and the consequences of aggregating legal information.
+- This repository is a research prototype and is not legal advice.
 
 ## License
 
