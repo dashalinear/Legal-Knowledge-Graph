@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 output/
 *.mojibake-backup
+.streamlit/secrets.toml
