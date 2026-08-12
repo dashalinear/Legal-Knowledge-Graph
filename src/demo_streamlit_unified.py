@@ -31,7 +31,7 @@ AURA_URI = get_setting("NEO4J_URI")
 AURA_USER = get_setting("NEO4J_USER")
 AURA_PASSWORD = get_setting("NEO4J_PASSWORD")
 AURA_DATABASE = get_setting("NEO4J_DATABASE")
-ROLE_DEMO_DIR = get_setting("ROLE_DEMO_DIR")
+ROLE_DEMO_DIR = get_setting("ROLE_DEMO_DIR", str(Path(__file__).resolve().parent))
 
 
 @st.cache_resource
@@ -51,16 +51,21 @@ def get_aura_driver():
 
 @st.cache_resource
 def get_role_module():
-    if not ROLE_DEMO_DIR:
-        raise RuntimeError("В .env отсутствует ROLE_DEMO_DIR.")
+    source_dir = (
+        Path(ROLE_DEMO_DIR)
+        if ROLE_DEMO_DIR
+        else Path(__file__).resolve().parent
+    )
 
-    source_dir = Path(ROLE_DEMO_DIR)
     source_file = source_dir / "demo_ner_graph_roles.py"
 
     if not source_file.exists():
-        raise FileNotFoundError(f"Не найден role-aware NER файл: {source_file}")
+        raise FileNotFoundError(
+            f"Role-aware NER module was not found: {source_file}"
+        )
 
-    sys.path.insert(0, str(source_dir))
+    if str(source_dir) not in sys.path:
+        sys.path.insert(0, str(source_dir))
 
     spec = importlib.util.spec_from_file_location(
         "role_ner_source",
@@ -68,7 +73,7 @@ def get_role_module():
     )
 
     if spec is None or spec.loader is None:
-        raise RuntimeError("Не удалось загрузить demo_ner_graph_roles.py.")
+        raise RuntimeError("Unable to load demo_ner_graph_roles.py.")
 
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
