@@ -31,7 +31,7 @@ AURA_URI = get_setting("NEO4J_URI")
 AURA_USER = get_setting("NEO4J_USER")
 AURA_PASSWORD = get_setting("NEO4J_PASSWORD")
 AURA_DATABASE = get_setting("NEO4J_DATABASE")
-ROLE_DEMO_DIR = get_setting("ROLE_DEMO_DIR", str(Path(__file__).resolve().parent))
+ROLE_DEMO_DIR = get_setting("ROLE_DEMO_DIR") or str(Path(__file__).resolve().parent)
 
 
 @st.cache_resource
