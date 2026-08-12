@@ -18,7 +18,15 @@ from natasha import (
     NamesExtractor,
 )
 
-from article_extractor_v2 import extract_articles as extract_articles_v2
+# Built-in fallback extractor for Criminal Code of the Russian Federation articles.
+RE_UK_ARTICLE = re.compile(
+    r"(?iu)\b(?:?\.\s*\d+\s*)?(?:??\.|??????)\s*\d+(?:\.\d+)?\s*(?:??\s*??|??????????\s+???????\s+??????????\s+?????????)?"
+)
+
+
+def extract_articles_v2(text: str):
+    matches = RE_UK_ARTICLE.findall(text or "")
+    return list(dict.fromkeys(" ".join(item.split()) for item in matches))
 
 
 # ═════════════════════════════════════════════════════════════════════
