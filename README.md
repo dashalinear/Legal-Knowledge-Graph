@@ -4,6 +4,16 @@ LegalGraph-RU is a minimal, reproducible implementation of a pipeline for buildi
 
 The goal of this README is reproducibility. Every step below is written so that another researcher can clone the repository, install dependencies, run the pipeline locally, and understand which files correspond to each stage of the workflow, as well as where the paper's source files and figures live.
 
+## Example knowledge graph
+
+The figure below shows a local knowledge graph generated for a synthetic criminal case. Nodes represent the case, court, persons with their procedural roles, and cited legal articles; edges represent their relations.
+
+![Example local knowledge graph](output/local_graph_case_0001.png)
+
+- Interactive demo: https://knowledge-graph-full.streamlit.app/
+- Source code for local graph construction: [`src/build_local_graph.py`](src/build_local_graph.py)
+- Pre-rendered interactive HTML export: [`output/local_graph.html`](output/local_graph.html)
+  
 ## What the repository contains
 
 This repository is intentionally small. It provides a demonstration version of the broader research workflow rather than the full private research environment. The included components are sufficient to reproduce the public demo pipeline from input JSON cases to extracted entities and graph outputs, and it also bundles the LaTeX source of the corresponding paper.
