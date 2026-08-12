@@ -14,11 +14,24 @@ from pyvis.network import Network
 
 load_dotenv()
 
-AURA_URI = os.getenv("NEO4J_URI")
-AURA_USER = os.getenv("NEO4J_USER")
-AURA_PASSWORD = os.getenv("NEO4J_PASSWORD")
-AURA_DATABASE = os.getenv("NEO4J_DATABASE")
-ROLE_DEMO_DIR = os.getenv("ROLE_DEMO_DIR")
+
+def get_setting(name: str) -> str | None:
+    value = os.getenv(name)
+
+    if value:
+        return value
+
+    try:
+        return st.secrets.get(name)
+    except Exception:
+        return None
+
+
+AURA_URI = get_setting("NEO4J_URI")
+AURA_USER = get_setting("NEO4J_USER")
+AURA_PASSWORD = get_setting("NEO4J_PASSWORD")
+AURA_DATABASE = get_setting("NEO4J_DATABASE")
+ROLE_DEMO_DIR = get_setting("ROLE_DEMO_DIR")
 
 
 @st.cache_resource
