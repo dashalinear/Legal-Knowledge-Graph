@@ -67,9 +67,9 @@ def main() -> None:
 
     html_path = Path("output") / "local_graph.html"
     html_path.parent.mkdir(parents=True, exist_ok=True)
+
     network.write_html(str(html_path), open_browser=False, notebook=False)
 
-    # Встраиваем содержимое HTML, а не строковый путь к файлу.
     html = html_path.read_text(encoding="utf-8")
     components.html(html, height=540, scrolling=False)
 
